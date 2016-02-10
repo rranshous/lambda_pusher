@@ -25,20 +25,20 @@ def lambda_handler(event, context):
     for record in event['Records']:
         print("Record: %s, TimeSince: %s" % (record, time.time() - start_time))
         count = count + 1
-        print("handling %s of %s" % (count, total))
+        #print("handling %s of %s" % (count, total))
         # Kinesis data is base64 encoded so decode here
         payload_string = base64.b64decode(record['kinesis']['data'])
         shard_id = record['kinesis']['partitionKey']
-        print("Decoded payload: " + payload_string)
+        #print("Decoded payload: " + payload_string)
         target_url = 'http://ranshous.com:4567'
         event_data_string = payload_string
-        print("target_url: %s; event_data: %s, shard_id: %s" % (target_url, event_data_string, shard_id))
+        print("[%s|%s] target_url: %s" % (shard_id, event_data_string, target_url))
 
         try:
             response = manager.request('POST', target_url, body=event_data_string, headers={'JMSXGroupID':str(shard_id)})
         except Exception as e:
-            print("Exception occurred: %s" % e)
+            print("[%s|%s] Exception occurred: %s" % (shard_id, event_data_string, e))
             raise
 
-        print("response: %s" % response.status)
+        print("[%s|%s] response: %s" % (response.status, shard_id, event_data_string))
     return 'Successfully processed {} records.'.format(len(event['Records']))
